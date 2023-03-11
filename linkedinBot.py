@@ -3,18 +3,19 @@ This Bot Scrapes all profiles with a particular role.
 """
 import re
 import time
-from typing import Union, Optional
+from typing import Union
 
 import pandas
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 
-def extract_text_only(word: Union[list, str]) -> Optional[tuple,list]:
+def extract_text_only(word: Union[list, str]) -> Union[tuple, list]:
     """
     this function formats text.
     accepts only alpha numeric characters and some specific required special characters.
@@ -25,14 +26,14 @@ def extract_text_only(word: Union[list, str]) -> Optional[tuple,list]:
     word = re.sub(regex, "", word)
     word = word.strip()
     return word
- 
+
 
 def get_about(about_soup: BeautifulSoup) -> str:
     """
     this function gets the about block data of a profile.
-    Args: 
+    Args:
         about_soup (BeautifulSoup) - This is a Soup of About Block.
-    Returns: 
+    Returns:
         a string of About Block.
     """
     about = about_soup.find("p")
@@ -46,9 +47,9 @@ def get_about(about_soup: BeautifulSoup) -> str:
 def get_experience(experience_soup: BeautifulSoup) -> list:
     """
     this function gets all experiences of a profile.
-    Args: 
+    Args:
         experience_soup: (BeautifulSoup) - This is a Soup of Experience Block.
-     Returns:
+    Returns:
         a list of objects, where each object represents an experience data of a profile.
     """
     total_experiences = []
@@ -104,9 +105,9 @@ def get_experience(experience_soup: BeautifulSoup) -> list:
 def get_projects(projects_soup: BeautifulSoup) -> list:
     """
     this function gets all projects of a profile.
-    Args: 
+    Args:
         projects_soup: (BeautifulSoup) - This is a Soup of Projects Block.
-     Returns:
+    Returns:
         a list of objects, where each object represents an project data of a profile.
     """
     total_projects = []
@@ -148,9 +149,9 @@ def get_projects(projects_soup: BeautifulSoup) -> list:
 def get_certification(certifications_soup: BeautifulSoup) -> list:
     """
     this function gets all certificates of a profile.
-    Args: 
+    Args:
         certificates_soup: (BeautifulSoup) - This is a Soup of certificate Block.
-     Returns:
+    Returns:
         a list of objects, where each object represents an certificate data of a profile.
     """
     total_certifications = []
@@ -186,7 +187,7 @@ def get_basic_details(user_details: WebElement) -> dict:
     we get all this data using XPATH of the web elements.
 
     Args:
-        user_details: (weeElement) - it is a webelement of user basic information.
+        user_details: (weeElement) - it is a web Element of user basic information.
     Returns:
         a dictionary, which contains basic data of the user in key,value pairs.
     """
@@ -252,10 +253,10 @@ def get_data_from_google(role: str) -> None:
     """
     # start time is noted here.
     start_time = time.time()
-    
-    # the list which contains whole profile data. 
+
+    # the list which contains whole profile data.
     total_data = []
-    
+
     # this search url is very specific.
     # here we only get results from linkedin
     # and also the results are in english language and from India.
@@ -263,20 +264,20 @@ def get_data_from_google(role: str) -> None:
     only_english = "language:en"
     only_indians = "location:In"
     search_url = "https://www.google.com/search?q=" + url + only_english + only_indians
-    
+
     # here we are using headless driver
-    # beacuse it is faster and efficient.
+    # because it is faster and efficient.
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     driver = webdriver.Chrome(options=chrome_options)
-    
-    # sending request with seacrh url
+
+    # sending request with search url
     driver.get(search_url)
-    
+
     # wait function - which is given 10 secs to wait , when called.
     wait = WebDriverWait(driver, 10)
-    
-    # this is a Flag which says that, does the particular page has a next button for pagintion.
+
+    # this is a Flag which says that, does the particular page has a next button for pagination.
     next_exists = True
 
     # until the page contains a next button we execute code in while block.
@@ -292,11 +293,11 @@ def get_data_from_google(role: str) -> None:
                 )
             )
         except Exception:
-            # this is to handle the case, when driver is not able to locate 
+            # this is to handle the case, when driver is not able to locate
             # profile links on google search results page.
             next_exists = False
             continue
-        
+
         # iterating over each profile link
         for link in linkedin_links:
 
@@ -330,8 +331,8 @@ def get_data_from_google(role: str) -> None:
                     '//*[@id="main-content"]/section[1]/div/section/section[1]/div/div[2]/div[1]',
                 )
             except Exception:
-                # this is to handle the case, when we driver is not able to locate a profile link or 
-                # getting a profile link without any hyperlink. 
+                # this is to handle the case, when we driver is not able to locate a profile link or
+                # getting a profile link without any hyperlink.
                 continue
 
             basic_data = get_basic_details(user_details)
@@ -343,7 +344,7 @@ def get_data_from_google(role: str) -> None:
                 ).is_displayed()
             except Exception:
                 continue
-            
+
             # accessing all the sections in the profile page
             if user_has_sections:
                 sections = user_details.find_elements(
@@ -383,7 +384,7 @@ def get_data_from_google(role: str) -> None:
             # going back to google results page so that we could pick the next profile link.
             driver.back()
 
-        # check whether the current page has a "next" button for pagination.  
+        # check whether the current page has a "next" button for pagination.
         next_exists = driver.find_element(By.ID, "pnnext").is_displayed()
         if next_exists:
             next_page = driver.find_element(By.XPATH, '//*[@id="pnnext"]')
@@ -405,4 +406,4 @@ def get_data_from_google(role: str) -> None:
 
 if __name__ == "__main__":
     role = "python developer"
-    get_data_from_google(role="flutter developer", need_jobs=False)
+    get_data_from_google(role="flutter developer")
